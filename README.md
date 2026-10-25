@@ -1,4 +1,4 @@
-# Yatzy
+#PQC Yatzy
 
 I wanted to try post-quantum cryptography in a real project, so I built a multiplayer Yatzy game where online games are end-to-end encrypted and the server never sees the game in plain text.
 

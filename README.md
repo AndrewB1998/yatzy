@@ -1,19 +1,27 @@
 # Yatzy
 
-Yatzy in the browser. You can play solo or online with up to 5 friends using a room code or an invite link. Works on desktop and mobile, and in English and Finnish.
+I wanted to try post-quantum cryptography in a real project, so I built a multiplayer Yatzy game where online games are end to end encrypted and the server never sees the game in plain text.
+
+You can play solo or online with up to 5 friends using a room code or an invite link. Works on desktop and mobile, and in English and Finnish.
 
 **Play:** https://andrewb1998.github.io/yatzy/
 
 ## How it works
 
-The game is a single `index.html` hosted on GitHub Pages. Online play uses Firebase (anonymous login and Realtime Database). The host runs the game and checks every move, and the other players send their moves to the host.
+The game is a single `index.html` hosted on GitHub Pages, written in plain HTML, CSS and JavaScript. Online play uses Firebase (anonymous login and Realtime Database). The host runs the game and checks every move, and the other players send their moves to the host. The database rules let each player write only to their own entry.
 
-Multiplayer is end to end encrypted with post-quantum cryptography. It uses ML-KEM to share a room key with each player, ML-DSA to sign every game update so players know it came from the host, and AES-GCM to encrypt all game events before they go to Firebase, so the server only sees ciphertext.
+## Security
 
-More details in [SECURITY.md](SECURITY.md).
+**ML-KEM** (as X-Wing, together with X25519) shares a random room key with each player.
 
-## Built with
+**ML-DSA** (together with Ed25519) signs every game update, so players know it came from the host.
 
-Plain HTML, CSS and JavaScript in one file, with no framework or build step. The page contains the game logic, the UI, the Firebase connection and a bundled crypto library. Firebase only relays encrypted messages between players, and the database rules let each player write only to their own entry.
+**AES-GCM** encrypts all game events before they go to Firebase, so the server only sees ciphertext.
 
-Crypto libraries: [noble](https://paulmillr.com/noble/) by Paul Miller (MIT).
+The invite link contains the host's key fingerprint, so nobody else can pretend to be the host. Updates have a signed sequence number to stop replays, and the room key changes when a player leaves. The crypto libraries are bundled into the page instead of loaded from a CDN, the page has a Content Security Policy, and you can run a self-test in Settings.
+
+## Limitations
+
+The host runs the game, so a modified host could cheat with the dice. If you join by typing the code instead of using the invite link, the first host you see is trusted. Firebase can still see player names and who is in which room. Keys are stored in the browser, and JavaScript crypto is not constant time, so side channels are possible.
+
+Crypto libraries: [noble](https://paulmillr.com/noble/) by Paul Miller (MIT), @noble/post-quantum 0.7.1.

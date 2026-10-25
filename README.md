@@ -1,6 +1,6 @@
 # Yatzy
 
-I wanted to try post-quantum cryptography in a real project, so I built a multiplayer Yatzy game where online games are end to end encrypted and the server never sees the game in plain text.
+I wanted to try post-quantum cryptography in a real project, so I built a multiplayer Yatzy game where online games are end-to-end encrypted and the server never sees the game in plain text.
 
 You can play solo or online with up to 5 friends using a room code or an invite link. Works on desktop and mobile, and in English and Finnish.
 

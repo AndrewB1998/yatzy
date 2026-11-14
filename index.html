@@ -532,19 +532,18 @@ button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer;-webk
 .rx-pop{position:absolute;width:64px;height:64px;margin-left:-32px;pointer-events:none;z-index:7;animation:rxpop 2s ease-out forwards}
 .rx-pop img{width:100%;height:100%;object-fit:contain}
 /* reactions panel: stickers / GIF tabs, wide chat button underneath; fixed width, scrolls inside */
-.rx-pick.tabbed{width:min(204px,calc(100vw - 32px));height:var(--rxh,320px);max-height:none;display:flex;flex-direction:column;gap:6px;padding:6px;overflow:hidden;background:color-mix(in srgb,var(--surface) 70%,transparent)}
+.rx-pick.tabbed{width:var(--rxw,140px);height:var(--rxh,320px);max-height:none;display:flex;flex-direction:column;gap:6px;padding:6px;overflow:hidden;background:color-mix(in srgb,var(--surface) 93%,transparent);box-shadow:0 10px 28px rgba(0,0,0,.4)}
 .rx-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .rx-st{display:grid;grid-template-columns:1fr 1fr;gap:4px}
-.rx-gf{display:none;grid-template-columns:1fr 1fr;gap:4px}
+.rx-gf{display:none;grid-template-columns:1fr;gap:5px}
 .rx-pick.gifs .rx-st{display:none}
 .rx-pick.gifs .rx-gf{display:grid}
 .rx-pick.tabbed .rx-st button{width:100%;aspect-ratio:1}
-.rx-pick.tabbed .rx-gf button{width:100%;aspect-ratio:4/3;height:auto;padding:0;overflow:hidden;border-radius:8px;background:rgba(0,0,0,.25);display:block}
-.rx-pick.tabbed .rx-gf img{display:block;width:100%;height:100%;object-fit:cover}
+.rx-pick.tabbed .rx-gf button{width:100%;aspect-ratio:21/9;height:auto;padding:0;overflow:hidden;border-radius:8px;background:rgba(0,0,0,.25);display:block}
+.rx-pick.tabbed .rx-gf img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
 /* see-through in the picker only; sent reactions show at full strength as before */
-.rx-pick.tabbed .rx-body img{opacity:.6;transition:opacity .12s}
-.rx-pick.tabbed .rx-gf img{opacity:.45}
-.rx-pick.tabbed .rx-gf button{background:rgba(0,0,0,.12)}
+.rx-pick.tabbed .rx-body img{opacity:.85;transition:opacity .12s}
+.rx-pick.tabbed .rx-gf button{background:rgba(0,0,0,.3)}
 .rx-pick.tabbed .rx-body button:active img{opacity:1}
 @media (hover:hover){.rx-pick.tabbed .rx-body button:hover img{opacity:1}}
 .rx-tabs{display:flex;flex:none;gap:2px;padding:3px;border-radius:10px;background:var(--surface-2);border-top:0}
@@ -2480,7 +2479,10 @@ function syncRxIcon(){$('#g-rx').classList.toggle('isgif',store.get('yz.rxtab','
 syncRxIcon();
 function fitRx(){   // as tall as there is room for, but never above the top of the scorecard / board
   const pk=$('#rx-pick'), a=$('#g-actions').getBoundingClientRect(), area=$('#kboard').hidden?$('#pad'):$('#kboard'), top=area.getBoundingClientRect().top;
-  pk.style.setProperty('--rxh',Math.max(200,Math.min(430,a.top-8-Math.max(8,top)))+'px');
+  pk.style.setProperty('--rxh',Math.max(200,Math.min(470,a.top-8-Math.max(8,top)))+'px');
+  // width: end just before the points of the left scorecard column (its last 65 px), 130-180 px; Kivi board: 150 px
+  const up=$('#col-up').getBoundingClientRect(), left=$('#g-rx').getBoundingClientRect().left;
+  const w=area.id==='pad'&&up.width?up.right-71-left:150; pk.style.setProperty('--rxw',Math.round(Math.max(130,Math.min(180,w)))+'px');
 }
 function buildRx(){
   if(rxBuilt)return; rxBuilt=true;
@@ -2870,7 +2872,7 @@ const bot=(function(){
 /* ---------- version & update check ----------
    Bump APP_VER whenever you publish a new index.html. The game compares it
    with the file on the site and offers a one-tap update; it never reloads by itself. */
-const APP_VER='51';
+const APP_VER='53';
 let updLast=0, updVer=null;
 function checkUpdate(){
   if(updVer||location.protocol==='file:'||Date.now()-updLast<60000)return;

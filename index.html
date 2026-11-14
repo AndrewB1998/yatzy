@@ -780,6 +780,9 @@ body[data-gm=maxi] #tray,body[data-gm=kivi] #tray{--ds:clamp(34px,10.5vw,46px)}
 .chat-sheet .chat-head{margin:0 4px 6px}
 .chat-sheet .chat-row{margin-top:6px}
 .chat-sheet .chat-list{min-height:0;flex:0 1 auto}
+.chat-sheet.full .chat-card{height:auto;min-height:var(--chat-min,0px)}
+.chat-sheet.full .chat-list{flex:1 1 auto}
+.chat-sheet.full .chat-list>:first-child{margin-top:auto}   /* messages sit at the bottom, next to the message box */
 .chat-sheet .chat-empty{margin:6px auto}
 .chat-card{display:flex;flex-direction:column;max-height:min(70vh,560px);padding-bottom:14px}
 .chat-head{display:flex;align-items:center;justify-content:space-between;margin:-4px 0 8px}
@@ -2900,7 +2903,7 @@ const bot=(function(){
 /* ---------- version & update check ----------
    Bump APP_VER whenever you publish a new index.html. The game compares it
    with the file on the site and offers a one-tap update; it never reloads by itself. */
-const APP_VER='57';
+const APP_VER='59';
 let updLast=0, updVer=null;
 function checkUpdate(){
   if(updVer||location.protocol==='file:'||Date.now()-updLast<60000)return;
@@ -2971,11 +2974,16 @@ function chatPos(){
   const vt=vv?vv.offsetTop:0, vh=vv?vv.height:H, kbOpen=vh<H-100;
   const de=document.documentElement.style, sh=$('#chat-sheet');
   de.setProperty('--vvt',vt+'px'); de.setProperty('--vvh',vh+'px');
-  sh.classList.toggle('kb',kbOpen);
+  sh.classList.toggle('kb',kbOpen); sh.classList.toggle('full',cur==='game');   // in a game the chat opens at full size right away
   // keyboard open: use the whole visible area; closed: grow at most up to the scorecard top
-  let maxH=vh-20;
-  if(!kbOpen&&cur==='game'){const p=$('#pad').getBoundingClientRect();if(p.height)maxH=H-Math.max(8,p.top)-24;}
-  de.setProperty('--chat-h',Math.max(160,maxH)+'px');
+  // max: keyboard open = the whole visible area; closed = up to the scorecard top
+  // start size (in a game): top edge lined up with the scorecard top, then it grows with the messages up to the max
+  let maxH=vh-20, minH=0;
+  if(cur==='game'){const p=$('#pad').getBoundingClientRect();if(p.height){
+    const bottom=kbOpen?vt+vh-6:H-12;
+    if(!kbOpen)maxH=bottom-Math.max(8,p.top);
+    minH=Math.min(maxH,Math.max(160,bottom-Math.max(vt+8,p.top)));}}
+  de.setProperty('--chat-h',Math.max(160,maxH)+'px'); de.setProperty('--chat-min',minH+'px');
 }
 if(window.visualViewport){visualViewport.addEventListener('resize',()=>{if(!$('#chat-sheet').hidden){chatPos();const l=$('#chat-list');l.scrollTop=l.scrollHeight;}});visualViewport.addEventListener('scroll',()=>{if(!$('#chat-sheet').hidden)chatPos();});}
 addEventListener('resize',()=>{if(!$('#chat-sheet').hidden)chatPos();});

@@ -564,7 +564,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer;-webk
 .rx-hchat svg{width:24px;height:24px}
 .rx-pop.gif{width:var(--w);height:var(--h);margin-left:calc(var(--w) / -2);border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:rxgif var(--dur) ease-out forwards}
 .rx-pop.gif.clear{box-shadow:none;border-radius:0}
-.rx-pop.gif img{opacity:.82}   /* a little see-through so the game shows behind */
+.rx-pop.gif img{opacity:.94}   /* a little see-through so the game shows behind */
 @keyframes rxgif{0%{opacity:0;transform:translateY(8px) scale(.6)}7%{opacity:1;transform:translateY(0) scale(1.05)}11%{transform:scale(1)}88%{opacity:1;transform:translateY(-4px)}100%{opacity:0;transform:translateY(-14px) scale(.96)}}
 @media (prefers-reduced-motion:reduce){.rx-pop.gif{animation:rxfade var(--dur) linear forwards}}
 @keyframes rxpop{0%{opacity:0;transform:translateY(8px) scale(.4)}14%{opacity:1;transform:translateY(0) scale(1.12)}24%{transform:scale(1)}75%{opacity:1;transform:translateY(-10px) scale(1)}100%{opacity:0;transform:translateY(-24px) scale(.95)}}
@@ -2897,7 +2897,7 @@ const bot=(function(){
 /* ---------- version & update check ----------
    Bump APP_VER whenever you publish a new index.html. The game compares it
    with the file on the site and offers a one-tap update; it never reloads by itself. */
-const APP_VER='54';
+const APP_VER='55';
 let updLast=0, updVer=null;
 function checkUpdate(){
   if(updVer||location.protocol==='file:'||Date.now()-updLast<60000)return;

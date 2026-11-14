@@ -2481,7 +2481,7 @@ function buildGifs(){
 const GIF_IC='<b>GIF</b>', STK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><circle cx="9" cy="10" r=".6" fill="currentColor"/><circle cx="15" cy="10" r=".6" fill="currentColor"/></svg>';
 function setGifMode(on,anim){
   const pk=$('#rx-pick'); if(on)buildGifs(); pk.classList.toggle('gifs',on);
-  const bd0=pk.querySelector('.rx-body'); if(anim&&bd0){bd0.classList.remove('rxa-l','rxa-r');void bd0.offsetWidth;bd0.classList.add(on?'rxa-l':'rxa-r');}
+  const bd0=pk.querySelector('.rx-body'); if(anim&&bd0){bd0.classList.remove('rxa-l','rxa-r');void bd0.offsetWidth;bd0.classList.add(anim==='r'?'rxa-r':anim==='l'?'rxa-l':on?'rxa-l':'rxa-r');}
   pk.querySelectorAll('.rx-tabs button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.tab==='gif')===on)));
   store.set('yz.rxtab',on?'gif':'st'); syncRxIcon(); rxRestoreScroll();
 }
@@ -2503,7 +2503,7 @@ function rxSwipeInit(pk){
   pk.addEventListener('touchstart',e=>{const t=e.touches[0];rxSw={x:t.clientX,y:t.clientY};},{passive:true});
   pk.addEventListener('touchend',e=>{
     if(!rxSw)return; const t=e.changedTouches[0], dx=t.clientX-rxSw.x, dy=t.clientY-rxSw.y; rxSw=null;
-    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.5){const gif=pk.classList.contains('gifs');if(dx<0&&!gif){setGifMode(true,true);sfx.tick();}else if(dx>0&&gif){setGifMode(false,true);sfx.tick();}rxSwiped=Date.now();}
+    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.5){const gif=!pk.classList.contains('gifs');setGifMode(gif,dx<0?'l':'r');sfx.tick();rxSwiped=Date.now();}   // either direction flips to the other panel
   },{passive:true});
   pk.addEventListener('click',e=>{if(Date.now()-rxSwiped<350){e.stopPropagation();e.preventDefault();}},true);   // a swipe is not a tap
 }
@@ -2903,7 +2903,7 @@ const bot=(function(){
 /* ---------- version & update check ----------
    Bump APP_VER whenever you publish a new index.html. The game compares it
    with the file on the site and offers a one-tap update; it never reloads by itself. */
-const APP_VER='59';
+const APP_VER='60';
 let updLast=0, updVer=null;
 function checkUpdate(){
   if(updVer||location.protocol==='file:'||Date.now()-updLast<60000)return;

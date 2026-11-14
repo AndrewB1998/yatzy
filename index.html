@@ -539,7 +539,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer;-webk
 .rx-pick.gifs .rx-st{display:none}
 .rx-pick.gifs .rx-gf{display:grid}
 .rx-pick.tabbed .rx-st button{width:100%;aspect-ratio:1}
-.rx-pick.tabbed .rx-gf button{width:100%;aspect-ratio:21/9;height:auto;padding:0;overflow:hidden;border-radius:8px;background:rgba(0,0,0,.25);display:block}
+.rx-pick.tabbed .rx-gf button{width:100%;aspect-ratio:2/1;height:auto;padding:0;overflow:hidden;border-radius:8px;background:rgba(0,0,0,.25);display:block}
 .rx-pick.tabbed .rx-gf img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
 /* see-through in the picker only; sent reactions show at full strength as before */
 .rx-pick.tabbed .rx-body img{opacity:.85;transition:opacity .12s}
@@ -550,6 +550,12 @@ button{font:inherit;color:inherit;touch-action:manipulation;cursor:pointer;-webk
 .rx-pick.tabbed .rx-tabs button{flex:1;width:auto;aspect-ratio:auto;height:42px;padding:0;border-radius:8px;color:var(--muted)}
 .rx-pick.tabbed .rx-tabs button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.22)}
 .rx-tabs svg{width:26px;height:26px}
+.rx-body{touch-action:pan-y}
+.rx-body.rxa-l{animation:rxsl .2s ease-out}
+.rx-body.rxa-r{animation:rxsr .2s ease-out}
+@keyframes rxsl{from{opacity:.3;transform:translateX(24px)}}
+@keyframes rxsr{from{opacity:.3;transform:translateX(-24px)}}
+@media (prefers-reduced-motion:reduce){.rx-body.rxa-l,.rx-body.rxa-r{animation:none}}
 .rx-gific{display:none;font-size:13px;font-weight:900;letter-spacing:.04em;border:2.5px solid currentColor;border-radius:6px;padding:2px 5px;line-height:1}
 #g-rx.isgif svg{display:none}
 #g-rx.isgif .rx-gific{display:inline-block}
@@ -2470,8 +2476,9 @@ function buildGifs(){
   });
 }
 const GIF_IC='<b>GIF</b>', STK_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c.9 1.2 2.1 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><circle cx="9" cy="10" r=".6" fill="currentColor"/><circle cx="15" cy="10" r=".6" fill="currentColor"/></svg>';
-function setGifMode(on){
+function setGifMode(on,anim){
   const pk=$('#rx-pick'); if(on)buildGifs(); pk.classList.toggle('gifs',on);
+  const bd0=pk.querySelector('.rx-body'); if(anim&&bd0){bd0.classList.remove('rxa-l','rxa-r');void bd0.offsetWidth;bd0.classList.add(on?'rxa-l':'rxa-r');}
   pk.querySelectorAll('.rx-tabs button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.tab==='gif')===on)));
   store.set('yz.rxtab',on?'gif':'st'); syncRxIcon(); const bd=pk.querySelector('.rx-body'); if(bd)bd.scrollTop=0;
 }
@@ -2479,17 +2486,28 @@ function syncRxIcon(){$('#g-rx').classList.toggle('isgif',store.get('yz.rxtab','
 syncRxIcon();
 function fitRx(){   // as tall as there is room for, but never above the top of the scorecard / board
   const pk=$('#rx-pick'), a=$('#g-actions').getBoundingClientRect(), area=$('#kboard').hidden?$('#pad'):$('#kboard'), top=area.getBoundingClientRect().top;
-  pk.style.setProperty('--rxh',Math.max(200,Math.min(470,a.top-8-Math.max(8,top)))+'px');
   // width: end just before the points of the left scorecard column (its last 65 px), 130-180 px; Kivi board: 150 px
   const up=$('#col-up').getBoundingClientRect(), left=$('#g-rx').getBoundingClientRect().left;
-  const w=area.id==='pad'&&up.width?up.right-71-left:150; pk.style.setProperty('--rxw',Math.round(Math.max(130,Math.min(180,w)))+'px');
+  const W=Math.round(Math.max(130,Math.min(180,area.id==='pad'&&up.width?up.right-71-left:150))); pk.style.setProperty('--rxw',W+'px');
+  // height: all stickers visible without scrolling (tile rows + tabs 42 + chat 48 + gaps), within the free space
+  const tile=(W-12-4)/2, rows=Math.ceil(RX.length/2), need=Math.ceil(rows*tile+(rows-1)*4+42+48+12+12+2);
+  pk.style.setProperty('--rxh',Math.max(200,Math.min(need,a.top-8-Math.max(8,top)))+'px');
+}
+let rxSw=null, rxSwiped=0;
+function rxSwipeInit(pk){
+  pk.addEventListener('touchstart',e=>{const t=e.touches[0];rxSw={x:t.clientX,y:t.clientY};},{passive:true});
+  pk.addEventListener('touchend',e=>{
+    if(!rxSw)return; const t=e.changedTouches[0], dx=t.clientX-rxSw.x, dy=t.clientY-rxSw.y; rxSw=null;
+    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.5){const gif=pk.classList.contains('gifs');if(dx<0&&!gif){setGifMode(true,true);sfx.tick();}else if(dx>0&&gif){setGifMode(false,true);sfx.tick();}rxSwiped=Date.now();}
+  },{passive:true});
+  pk.addEventListener('click',e=>{if(Date.now()-rxSwiped<350){e.stopPropagation();e.preventDefault();}},true);   // a swipe is not a tap
 }
 function buildRx(){
   if(rxBuilt)return; rxBuilt=true;
   const pk=$('#rx-pick'); pk.classList.add('tabbed');
   const tabs=document.createElement('div'); tabs.className='rx-tabs';
   [['st',STK_IC,t('stickers')],['gif',GIF_IC,'GIF']].forEach(([k,ic,lbl])=>{const b=document.createElement('button');b.type='button';b.dataset.tab=k;b.innerHTML=ic;b.setAttribute('aria-label',lbl);
-    b.addEventListener('click',()=>{sfx.tick();setGifMode(k==='gif');});tabs.appendChild(b);});
+    b.addEventListener('click',()=>{sfx.tick();setGifMode(k==='gif',true);});tabs.appendChild(b);});
   const c=document.createElement('button'); c.type='button'; c.className='rx-hchat'; c.setAttribute('aria-label',t('chat'));
   c.innerHTML=$('#g-chat svg').outerHTML; c.addEventListener('click',()=>{hideRx();showChat(true);});
   const lb=document.createElement('span'); lb.textContent=t('chat'); c.appendChild(lb);
@@ -2501,9 +2519,16 @@ function buildRx(){
     b.addEventListener('click',()=>sendRx(it.k)); sg.appendChild(b);
   });
   const gw=document.createElement('div'); gw.className='rx-gf';
-  bd.append(sg,gw); pk.append(bd,tabs,c);
+  bd.append(sg,gw); pk.append(bd,tabs,c); rxSwipeInit(pk);
 }
-function toggleRx(){const pk=$('#rx-pick'); if(pk.hidden){buildRx();setGifMode(store.get('yz.rxtab','st')==='gif');fitRx();pk.hidden=false;}else pk.hidden=true;}
+function toggleRx(){const pk=$('#rx-pick'); if(pk.hidden){buildRx();setGifMode(store.get('yz.rxtab','st')==='gif');fitRx();pk.hidden=false;fitRxExact();}else pk.hidden=true;}
+function fitRxExact(){   // grow to the measured height of the sticker grid (still within the free space)
+  const pk=$('#rx-pick'), bd=pk.querySelector('.rx-body'), sg=pk.querySelector('.rx-st'); if(!bd||!sg)return;
+  const gif=pk.classList.contains('gifs'); if(gif)pk.classList.remove('gifs');
+  const extra=sg.scrollHeight-bd.clientHeight; if(gif)pk.classList.add('gifs');
+  if(extra>0){const a=$('#g-actions').getBoundingClientRect(), area=$('#kboard').hidden?$('#pad'):$('#kboard'), top=area.getBoundingClientRect().top;
+    pk.style.setProperty('--rxh',Math.min(pk.offsetHeight+extra+1,a.top-8-Math.max(8,top))+'px');}
+}
 function hideRx(){const pk=$('#rx-pick'); if(pk)pk.hidden=true;}
 function sendRx(k){
   hideRx(); hideChat();
@@ -2872,7 +2897,7 @@ const bot=(function(){
 /* ---------- version & update check ----------
    Bump APP_VER whenever you publish a new index.html. The game compares it
    with the file on the site and offers a one-tap update; it never reloads by itself. */
-const APP_VER='53';
+const APP_VER='54';
 let updLast=0, updVer=null;
 function checkUpdate(){
   if(updVer||location.protocol==='file:'||Date.now()-updLast<60000)return;

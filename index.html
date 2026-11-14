@@ -2480,15 +2480,17 @@ function setGifMode(on,anim){
   const pk=$('#rx-pick'); if(on)buildGifs(); pk.classList.toggle('gifs',on);
   const bd0=pk.querySelector('.rx-body'); if(anim&&bd0){bd0.classList.remove('rxa-l','rxa-r');void bd0.offsetWidth;bd0.classList.add(on?'rxa-l':'rxa-r');}
   pk.querySelectorAll('.rx-tabs button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.tab==='gif')===on)));
-  store.set('yz.rxtab',on?'gif':'st'); syncRxIcon(); const bd=pk.querySelector('.rx-body'); if(bd)bd.scrollTop=0;
+  store.set('yz.rxtab',on?'gif':'st'); syncRxIcon(); rxRestoreScroll();
 }
+function rxRestoreScroll(){const pk=$('#rx-pick'),bd=pk.querySelector('.rx-body');if(!bd||pk.hidden)return;const k=pk.classList.contains('gifs')?'gif':'st';rxNoSave=true;bd.scrollTop=(store.get('yz.rxsc',{})||{})[k]||0;requestAnimationFrame(()=>{rxNoSave=false;});}
+let rxNoSave=false;
 function syncRxIcon(){$('#g-rx').classList.toggle('isgif',store.get('yz.rxtab','st')==='gif');}
 syncRxIcon();
 function fitRx(){   // as tall as there is room for, but never above the top of the scorecard / board
   const pk=$('#rx-pick'), a=$('#g-actions').getBoundingClientRect(), area=$('#kboard').hidden?$('#pad'):$('#kboard'), top=area.getBoundingClientRect().top;
   // width: end just before the points of the left scorecard column (its last 65 px), 130-180 px; Kivi board: 150 px
   const up=$('#col-up').getBoundingClientRect(), left=$('#g-rx').getBoundingClientRect().left;
-  const W=Math.round(Math.max(130,Math.min(180,area.id==='pad'&&up.width?up.right-71-left:150))); pk.style.setProperty('--rxw',W+'px');
+  const W=Math.round(Math.max(135,Math.min(186,area.id==='pad'&&up.width?up.right-67-left:156))); pk.style.setProperty('--rxw',W+'px');
   // height: all stickers visible without scrolling (tile rows + tabs 42 + chat 48 + gaps), within the free space
   const tile=(W-12-4)/2, rows=Math.ceil(RX.length/2), need=Math.ceil(rows*tile+(rows-1)*4+42+48+12+12+2);
   pk.style.setProperty('--rxh',Math.max(200,Math.min(need,a.top-8-Math.max(8,top)))+'px');
@@ -2520,8 +2522,9 @@ function buildRx(){
   });
   const gw=document.createElement('div'); gw.className='rx-gf';
   bd.append(sg,gw); pk.append(bd,tabs,c); rxSwipeInit(pk);
+  let scT=0; bd.addEventListener('scroll',()=>{if(rxNoSave)return;clearTimeout(scT);scT=setTimeout(()=>{const v=store.get('yz.rxsc',{})||{};v[pk.classList.contains('gifs')?'gif':'st']=Math.round(bd.scrollTop);store.set('yz.rxsc',v);},120);},{passive:true});
 }
-function toggleRx(){const pk=$('#rx-pick'); if(pk.hidden){buildRx();setGifMode(store.get('yz.rxtab','st')==='gif');fitRx();pk.hidden=false;fitRxExact();}else pk.hidden=true;}
+function toggleRx(){const pk=$('#rx-pick'); if(pk.hidden){buildRx();setGifMode(store.get('yz.rxtab','st')==='gif');fitRx();pk.hidden=false;fitRxExact();rxRestoreScroll();}else pk.hidden=true;}
 function fitRxExact(){   // grow to the measured height of the sticker grid (still within the free space)
   const pk=$('#rx-pick'), bd=pk.querySelector('.rx-body'), sg=pk.querySelector('.rx-st'); if(!bd||!sg)return;
   const gif=pk.classList.contains('gifs'); if(gif)pk.classList.remove('gifs');
@@ -2897,7 +2900,7 @@ const bot=(function(){
 /* ---------- version & update check ----------
    Bump APP_VER whenever you publish a new index.html. The game compares it
    with the file on the site and offers a one-tap update; it never reloads by itself. */
-const APP_VER='56';
+const APP_VER='57';
 let updLast=0, updVer=null;
 function checkUpdate(){
   if(updVer||location.protocol==='file:'||Date.now()-updLast<60000)return;
